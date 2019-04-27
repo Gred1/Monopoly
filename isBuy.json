@@ -1,0 +1,21 @@
+{
+  "one_time": true,
+  "buttons": [
+    [{
+      "action": {
+        "type": "text",
+        "label": "Купить предприятие"
+      },
+      "color": "positive"
+    }],
+
+    [{
+      "action": {
+        "type": "text",
+        "label": "Не покупать"
+      },
+      "color": "negative"
+    }]
+
+  ]
+} 

@@ -85,10 +85,10 @@ class Connect:
 			text = "ДА НАЧНЕТСЯ МОНОПОЛИЯ!\n\n"
 			text = text + vk_methods.getNameByIdAllUsersInLobby(lobby) + '\n'
 			first = vk_methods.getNameById(self.lobby[self.i-1][0][0])
-			text = text + 'Первым ходит ' + first
-			button = 'game.json'
-
-			vk_methods.sendMessageAll(lobby[0], text, button="game.json")
+			text1 = text + '_______________\n' + 'Первым ходит ' + first
+			text2 = text + "Вы ходите первым"
+			vk_methods.write_msg(self.lobby[self.i-1][0][0], text2, button="game.json")
+			vk_methods.sendMessageAllNoUser(lobby[0], text1, self.lobby[self.i-1][0][0], button="game_without.json")
 			print(i)
 			print("Если")
 			return lobby, i, self.lobby[self.i-1][0][0]

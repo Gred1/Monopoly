@@ -71,13 +71,15 @@ def run():
                     else:
                         users_bot_class_dict = Lilly()
                         text = users_bot_class_dict.update_screen(mes_user)
-                        vk_methods.write_msg(event.user_id, text, button)
+                        vk_methods.write_msg(event.user_id, text, button="keyboard.json")
 
                 else:
                     if is_active[1] == 1: # КОД ОСНОВНОЙ ИГРЫ
                         text = "Да начнется Монополия\n"
                         button = "game.json"
                         text = monopoly[i_user].update_screen(mes_user, user_id)
+                        button = monopoly[i_user].button
+                        print(button)
                         if not text == False:
                             vk_methods.write_msg(event.user_id, text, button)
 

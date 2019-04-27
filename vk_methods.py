@@ -4,8 +4,11 @@ class VkMethods:
 	def __init__(self, vk):
 		self.vk = vk
 
-	def write_msg(self, user_id, s, button):
+	def write_msg(self, user_id, s, button='null.json'):
 		self.vk.method('messages.send', {'peer_id': user_id, "random_id": random.randrange(1,30000, 1), 'message': s, "keyboard":open(button, "r", encoding="UTF-8").read()})
+
+	def sendOnlyButton(self, user_id, button):
+		self.vk.method('messages.send', {'peer_id': user_id, "random_id": random.randrange(1,30000, 1), "keyboard":open(button, "r", encoding="UTF-8").read()})
 
 	def getNameById(self, user_id):
 		return self.vk.method('users.get', {'user_ids' : user_id})[0]['first_name']
