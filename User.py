@@ -19,9 +19,9 @@ class User:
 		return self.NEXT_INPUT1, self.button
 
 	def getPosition(self, num_move):
-		self.position = self.position + num.move
+		self.position = self.position + num_move
 		if (self.position > 39):
 			self.position = self.position - 40
-			return self.position
+		return self.position
 
 		
