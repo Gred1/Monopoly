@@ -96,16 +96,19 @@ class Monopoly:
 			text = 'Ход: ' + self.vk_methods.getNameById(self.move_players) # Сообщение
 			text1 = "Ваш ход"
 			text2, summa_dice = self.rollDice() # ПОЛУЧАЕМ СЛУЧАЙНОЕ ЧИСЛО ОТ 2 до 12
-
+			position = getPosition(summa_dice)
+			print("клетка под номером: " + str(position))
+			text2 = text2 + " попадает на клетку с " + self.map[position][0]
 			self.vk_methods.write_msg(self.move_players, text1, "game_without.json") # {ВАШ ХОД} - Сообщение для всех пользователей
-			self.vk_methods.sendMessageAllNoUser(self.id_users, text, user_id, "game_without.json") # - Сообщение для всех, кроме ходящего
+			self.vk_methods.sendMessageAllNoUser(self.id_users, "событие", user_id, "game_without.json") # - Сообщение для всех, кроме ходящего
+			if (self.map[position][0] == "event"):
+				self.vk_methods.sendMessageAll(self.id_users, text2, "game_without.json")
+			else:
+				self.vk_methods.sendMessageAll(self.id_users, text2, "game_without.json") # {КОСТИ} - Сообщение для всех пользователей
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "Задумывается о покупке бизнеса", user_id, "game_without.json")
 
-			self.vk_methods.sendMessageAll(self.id_users, text2, "game_without.json") # {КОСТИ} - Сообщение для всех пользователей
-			self.vk_methods.sendMessageAllNoUser(self.id_users, "Задумывается о покупке бизнеса", user_id, "game_without.json")
-
-			self.NEXT_INPUT, self.button = self.user[self.now_player].buyBusiness() # Направляем в функцию покупки бизнеса
-			self.LAST_NEXT_INPUT = self.NEXT_INPUT
-			return "Купить бизнесс?"
+				self.NEXT_INPUT, self.button = self.user[self.now_player].buyBusiness() # Направляем в функцию покупки бизнеса
+				return "Купить бизнесс?"
 		else:
 			self.button = "game.json"
 			return "Не понял"
@@ -190,7 +193,6 @@ class Monopoly:
 
 		if (self.count_players == 1): # если не осталось игроков - выводим поздравления
 			self.playersSuicide(user_id)
-			self.button = "null.json"
 
 		self.button = "null.json"
 		return "Вы вышли из игры, не выдержав капиталистический гнет"
@@ -199,10 +201,11 @@ class Monopoly:
 
 		if input_value == "ВЫХОД ИЗ ИГРЫ": # удаляем пользователя из игры
 			return self.exitFromGame(user_id)
+
 		self.now_player = user_id
 		self.NEXT_INPUT = self.user[self.now_player].NEXT_INPUT1
+
 		if self.NEXT_INPUT == "get_command" and self.isMovePlayers(user_id) == True: # выполняем действие
-			self.button="game_without.json"
 			return self.get_command(input_value, user_id)
 
 		elif self.NEXT_INPUT == "isBuy_command" and self.isMovePlayers(user_id) == True:
