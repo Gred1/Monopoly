@@ -10,7 +10,7 @@ class User:
 
 	def defaultValue(self):
 		self.NEXT_INPUT1 = "get_command"
-		self.button = "game.json"
+		self.button = "game_without.json"
 		return self.NEXT_INPUT1, self.button
 
 	def buyBusiness(self):

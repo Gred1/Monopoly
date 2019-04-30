@@ -7,6 +7,8 @@ from Connection import Connect
 from vk_methods import VkMethods
 from Monopoly import Monopoly
 from User import User
+import time
+import math
 
 
 
@@ -14,10 +16,29 @@ from User import User
 vk = vk_api.VkApi(token=config.token)
 
 # Работа с сообщениями
-longpoll = VkLongPoll(vk)
+timer = 0
 # Словарь, где будут хранится разные объекты бота для разных пользователей
 
+def everyTime(connect, monopoly):
+    lobby_from_class_connect = connect.lobby
+    for i in range(len(lobby_from_class_connect)):
+        if lobby_from_class_connect[i][1] == 1:
+            time_lobby = monopoly[i].timer
+
+            time_lobby = math.floor(time_lobby+30)
+            print(time_lobby)
+            print(math.floor(time.time()))
+            print()
+            if time_lobby == math.floor(time.time()):
+                monopoly[i].exitTime()
+                print('игрок вылетел')
+        if lobby_from_class_connect[i][1] == 1 and not lobby_from_class_connect[i][0]:
+            connect.lobby.remove([[], 1])
+            connect.i = connect.i - 1
+            break
+
 def run():
+    print(vk_api.__file__)
     print("Server started")
     i = 0
 
@@ -28,70 +49,66 @@ def run():
     connect = Connect(lobby)
     button = "keyboard.json"
 
+    while True:
 
-    for event in longpoll.listen():
+        everyTime(connect, monopoly) # проверяем, истекло ли время
 
-        if event.type == VkEventType.MESSAGE_NEW:
+        messages = vk.method("messages.getConversations", {"offset": 0, "count": 20, "filter": "unread"})
+        if messages["count"] >= 1:
 
-            if event.to_me:
+            print('New message:')
+            print('For me by: ', end='')
 
+            user_id = messages["items"][0]["last_message"]["from_id"]
+            mes_user = messages["items"][0]["last_message"]["text"].upper()
 
-                print('New message:')
-                print('For me by: ', end='')
-                print(event.user_id)
+            vk_methods = VkMethods(vk)
+            name = vk_methods.getNameById(user_id)
+            is_active, i_user = connect.getLobbyByIdUser(user_id)
 
-                user_id = event.user_id
-                mes_user = event.text.upper()
+            if not is_active == False:
+                mes = ''
+                for i in range(len(is_active[0])):
+                    mes = mes + str(is_active[0][i]) + ', '
+                print("Участник состоит в лобби: " + str(i_user))
+                print("Лобби: " + mes)
 
-                vk_methods = VkMethods(vk)
-                name = vk_methods.getNameById(user_id)
-                is_active, i_user = connect.getLobbyByIdUser(user_id)
+            if is_active == False: # ЕСЛИ ЛОББИ НЕ АКТИВНО - ПРОДОЛЖАЕМ ДОБАВЛЯТЬ ПОЛЬЗОВАТЕЛЕЙ
 
-                print(name)
-                print()
-
-                if not is_active == False:
-                    mes = ''
-                    for i in range(len(is_active[0])):
-                        mes = mes + str(is_active[0][i]) + ', '
-                    print("Участник состоит в лобби: " + str(i_user))
-                    print("Лобби: " + mes)
-
-                if is_active == False: # ЕСЛИ ЛОББИ НЕ АКТИВНО - ПРОДОЛЖАЕМ ДОБАВЛЯТЬ ПОЛЬЗОВАТЕЛЕЙ
-
-                    if mes_user == 'НАЙТИ': # ИЩЕМ ЛОББИ
-                        lobby, i, first_id = connect.AddUserInLobbyFind(user_id, vk)
-                        print(lobby[1])
-                        if lobby[1] == 1:
-                            monopoly[i] = Monopoly(i, lobby[0], first_id, vk)
-                            print('ДА')
-                        else:
-                            print('НЕТ')
-
+                if mes_user == 'НАЙТИ': # ИЩЕМ ЛОББИ
+                    lobby, i, first_id = connect.AddUserInLobbyFind(user_id, vk)
+                    print(lobby[1])
+                    if lobby[1] == 1:
+                        timer = time.time()
+                        monopoly[i] = Monopoly(i, lobby[0], first_id, vk, timer)
+                        print('ДА')
                     else:
-                        users_bot_class_dict = Lilly()
-                        text = users_bot_class_dict.update_screen(mes_user)
-                        vk_methods.write_msg(event.user_id, text, button="keyboard.json")
+                        print('НЕТ')
 
                 else:
-                    if is_active[1] == 1: # КОД ОСНОВНОЙ ИГРЫ
-                        text = "Да начнется Монополия\n"
-                        button = "game.json"
-                        text = monopoly[i_user].update_screen(mes_user, user_id)
-                        button = monopoly[i_user].button
-                        print(button)
-                        if not text == False:
-                            vk_methods.write_msg(event.user_id, text, button)
+                    users_bot_class_dict = Lilly()
+                    text = users_bot_class_dict.update_screen(mes_user)
+                    vk_methods.write_msg(user_id, text, button="keyboard.json")
 
-                    elif mes_user == 'ОТМЕНИТЬ ПОИСК':
-                        connect.cancelSearchUsers(user_id, is_active, name, vk)
+            else:
+                if is_active[1] == 1: # КОД ОСНОВНОЙ ИГРЫ
+                    text = "Да начнется Монополия\n"
+                    button = "game.json"
+                    text = monopoly[i_user].update_screen(mes_user, user_id)
+                    button = monopoly[i_user].button
+                    print(button)
+                    if not text == False:
+                        vk_methods.write_msg(user_id, text, button)
 
-                    else:
-                        text = "Ожидайте подключения других игроков!"
-                        vk_methods.write_msg(event.user_id, text, button)
+                elif mes_user == 'ОТМЕНИТЬ ПОИСК':
+                    connect.cancelSearchUsers(user_id, is_active, name, vk)
 
-                print('Text:', mes_user)
-                print()
+                else:
+                    text = "Ожидайте подключения других игроков!"
+                    vk_methods.write_msg(user_id, text, button)
+
+            print('Text:', mes_user)
+            print()
 
 
 

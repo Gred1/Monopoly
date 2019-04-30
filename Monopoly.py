@@ -2,10 +2,11 @@ from User import User
 from vk_methods import VkMethods
 from Connection import Connect
 import random
+import time
 
 class Monopoly:
 	"""docstring for Monopoly"""
-	def __init__(self, id_lobby, id_users, move_players, vk):
+	def __init__(self, id_lobby, id_users, move_players, vk, timer):
 
 		self.now_player = ''
 
@@ -28,6 +29,8 @@ class Monopoly:
 				"get_command" : "game.json",
 				"isBuy_command" : "isBuy.json"
 		}
+
+		self.timer = timer
 
 		# типы корпораций: 1 - ы
 		# ключ : [Название, Владелец, Тип корпорации, уровень филиала, цена["price_to_buy" : цена, "price_to_build_branch" : цена, "price_branch" : [цена, цена, цена, цена, цена]]]
@@ -90,24 +93,27 @@ class Monopoly:
 		else:
 			self.i = self.i + 1
 		self.move_players = self.id_users[self.i] # даем ход следующему игроку
+		self.timer = time.time()
 
 	def get_command(self, command, user_id):
 		if self.COMMANDS[0][0] == command: # БРОСИТЬ КУБИКИ
 			text = 'Ход: ' + self.vk_methods.getNameById(self.move_players) # Сообщение
 			text1 = "Ваш ход"
 			text2, summa_dice = self.rollDice() # ПОЛУЧАЕМ СЛУЧАЙНОЕ ЧИСЛО ОТ 2 до 12
-			position = self.user[user_id].getPosition(summa_dice)
+			position = self.user[self.move_players].getPosition(summa_dice)
 			print("клетка под номером: " + str(position))
-			text2 = text2 + '\n' + " попадает на клетку с " + self.map[position][0]
-			self.vk_methods.write_msg(self.move_players, text1, "game_without.json") # {ВАШ ХОД} - Сообщение для всех пользователей
+			text2 = text2 + '\n' + "Попадает на клетку с " + self.map[position][0]
+			 # {ВАШ ХОД} - Сообщение для всех пользователей
+
 			if (self.map[position][0] == "event"):
 				self.vk_methods.sendMessageAll(self.id_users, text2, "game_without.json")
-				self.vk_methods.sendMessageAllNoUser(self.id_users, "событие", user_id, "game_without.json") # - Сообщение для всех, кроме ходящего
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "событие", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
 				self.nextMove()
+				self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
 				return "Событие"
 			else:
 				self.vk_methods.sendMessageAll(self.id_users, text2, "game_without.json") # {КОСТИ} - Сообщение для всех пользователей
-				self.vk_methods.sendMessageAllNoUser(self.id_users, "Задумывается о покупке бизнеса", user_id, "game_without.json")
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "Задумывается о покупке бизнеса", self.move_players, "game_without.json")
 
 				self.NEXT_INPUT, self.button = self.user[self.now_player].buyBusiness() # Направляем в функцию покупки бизнеса
 				return "Купить бизнесс?"
@@ -170,6 +176,31 @@ class Monopoly:
 		self.vk_methods.sendMessageAll(self.id_users, text)
 		self.removePlayerFromLobby(self.id_users[0])
 
+	def exitTime(self):
+		last_players = False # если выходит последний игрок
+
+		self.vk_methods.write_msg(self.move_players, "Вы вышли, АФК", "null.json")
+		self.vk_methods.sendMessageAllNoUser(self.id_users, "Игрок " + self.vk_methods.getNameById(self.move_players) + " вышел", self.move_players)
+		self.timer = time.time()
+
+		if self.move_players == self.id_users[self.count_players-1]:
+			last_players = True
+		self.removePlayerFromLobby(self.move_players)
+		if last_players == True:
+			self.move_players = self.id_users[0]
+			self.i = 0
+		else:
+			self.move_players = self.id_users[self.i]
+
+		text = 'Следующий ход делает ' + self.vk_methods.getNameById(self.move_players)
+		self.vk_methods.write_msg(self.move_players, "Ваш ход", "game.json")
+		self.vk_methods.sendMessageAllNoUser(self.id_users, text, self.move_players, "game_without.json")
+
+		if (self.count_players == 1): # если не осталось игроков - выводим поздравления
+			self.playersSuicide(self.move_players)
+
+		self.button = "null.json"
+
 	def exitFromGame(self, user_id):
 		last_players = False # если выходит последний игрок
 		if user_id == self.id_users[self.count_players-1]:
@@ -199,7 +230,6 @@ class Monopoly:
 		return "Вы вышли из игры, не выдержав капиталистический гнет"
 
 	def update_screen(self, input_value, user_id):
-
 		if input_value == "ВЫХОД ИЗ ИГРЫ": # удаляем пользователя из игры
 			return self.exitFromGame(user_id)
 
