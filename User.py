@@ -25,4 +25,14 @@ class User:
 			self.position = self.position - 40
 		return self.position
 
+	def getRent(self):
+		self.NEXT_INPUT1 = 'rent_command'
+		self.button = "rent.json"
+		return self.NEXT_INPUT1, self.button
+
+	def game(self):
+		self.button = "game.json"
+		self.NEXT_INPUT1 = "get_command"
+		return self.NEXT_INPUT1, self.button
+
 		
