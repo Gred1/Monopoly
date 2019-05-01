@@ -81,6 +81,7 @@ class Monopoly:
 			39 : ["BENTLEY", 0, 8, 0, {"price_to_buy" : 350, "price_to_build_branch" : 200, "price_branch" : [50, 175, 700, 1500, 2000]}],
 		}
 		self.user = {}
+		self.position = 0
 
 		self.vk_methods = VkMethods(vk) 
 		
@@ -100,19 +101,55 @@ class Monopoly:
 			text = 'Ход: ' + self.vk_methods.getNameById(self.move_players) # Сообщение
 			text1 = "Ваш ход"
 			text2, summa_dice = self.rollDice() # ПОЛУЧАЕМ СЛУЧАЙНОЕ ЧИСЛО ОТ 2 до 12
-			position = self.user[self.move_players].getPosition(summa_dice)
-			print("клетка под номером: " + str(position))
-			text2 = text2 + '\n' + "Попадает на клетку с " + self.map[position][0]
+			self.position = self.user[self.move_players].getPosition(summa_dice)
+			print("клетка под номером: " + str(self.position))
+			text2 = text2 + '\n' + "Попадает на клетку с " + self.map[self.position][0]
+			self.vk_methods.sendMessageAll(self.id_users, text2, "game_without.json")
 			 # {ВАШ ХОД} - Сообщение для всех пользователей
 
-			if (self.map[position][0] == "event"):
-				self.vk_methods.sendMessageAll(self.id_users, text2, "game_without.json")
+			if (self.map[self.position][0] == "event"):
 				self.vk_methods.sendMessageAllNoUser(self.id_users, "событие", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
 				self.nextMove()
 				self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
 				return "Событие"
+
+			if (self.map[self.position][0] == "moving"):
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "Перемещение", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
+				self.nextMove()
+				self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
+				return "Перемещение"
+
+			if (self.map[self.position][0] == "charity"):
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "Благотворительность", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
+				self.nextMove()
+				self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
+				return "Благотворительность"
+
+			if (self.map[self.position][0] == "black_business"):
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "Черный бизнесс", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
+				self.nextMove()
+				self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
+				return "Черный бизнесс"
+
+			if (self.map[self.position][0] == "casino"):
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "Казино", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
+				self.nextMove()
+				self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
+				return "Казино"
+
+			if (self.map[self.position][0] == "jail"):
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "Тюрьма", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
+				self.nextMove()
+				self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
+				return "Тюрьма"
+
+			if (self.map[self.position][0] == "white_business"):		
+				self.vk_methods.sendMessageAllNoUser(self.id_users, "Белый бизнесс", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
+				self.nextMove()
+				self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
+				return "Белый бизнесс"
+
 			else:
-				self.vk_methods.sendMessageAll(self.id_users, text2, "game_without.json") # {КОСТИ} - Сообщение для всех пользователей
 				self.vk_methods.sendMessageAllNoUser(self.id_users, "Задумывается о покупке бизнеса", self.move_players, "game_without.json")
 
 				self.NEXT_INPUT, self.button = self.user[self.now_player].buyBusiness() # Направляем в функцию покупки бизнеса
@@ -123,22 +160,19 @@ class Monopoly:
 
 	def AnswerBuyBusiness(self, command, user_id):
 		if self.COMMANDS[1][0] == command: # покупаем бизнесс
+			self.map[self.position][1] = self.move_players
+			self.user[self.move_players].money = self.user[self.move_players].money - self.map[self.position][4]["price_to_buy"]
+
 			self.vk_methods.sendMessageAllNoUser(self.id_users, "Игрок купил предприятие",user_id, button="game_without.json")
 			self.vk_methods.write_msg(user_id, "Вы купили предприятие", button="game_without.json")
 			self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
-			print(self.i)
-			print(self.id_users)
 			self.nextMove()
-			print(self.i)
 			return False
 		elif self.COMMANDS[2][0] == command: # не покупаем бизнесс
 			self.vk_methods.sendMessageAllNoUser(self.id_users, "Игрок не купил предприятие", user_id, button="game_without.json")
 			self.vk_methods.write_msg(user_id, "Вы не купили предприятие", button="game_without.json")
 			self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
-			print(self.i)
-			print(self.id_users)
 			self.nextMove()
-			print(self.i)
 			return False
 		else:
 			self.button = self.user[self.now_player].button
@@ -167,6 +201,8 @@ class Monopoly:
 		self.vk_methods.write_msg(self.move_players, text3, "game.json")
 		self.vk_methods.sendMessageAllNoUser(self.id_users, text2, self.move_players, "game_without.json")
 
+
+
 	def removePlayerFromLobby(self, id_user):
 		self.id_users.remove(id_user)
 		self.count_players = len(self.id_users)
@@ -185,6 +221,7 @@ class Monopoly:
 
 		if self.move_players == self.id_users[self.count_players-1]:
 			last_players = True
+
 		self.removePlayerFromLobby(self.move_players)
 		if last_players == True:
 			self.move_players = self.id_users[0]
