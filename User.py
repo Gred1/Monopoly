@@ -6,7 +6,8 @@ class User:
 		self.money = 2000
 		self.position = 0
 		self.NEXT_INPUT1 = "get_command"
-		self.button = "game.json"
+		self.button = "game_without.json"
+		self.property = []
 
 	def defaultValue(self):
 		self.NEXT_INPUT1 = "get_command"
