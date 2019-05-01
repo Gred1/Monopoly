@@ -1,6 +1,23 @@
 {
   "one_time": false,
   "buttons": [
+
+    [{
+      "action": {
+        "type": "text",
+        "label": "Моя статистика"
+      },
+      "color": "positive"
+    }],
+
+    [{
+      "action": {
+        "type": "text",
+        "label": "Статистика других игроков"
+      },
+      "color": "positive"
+    }],
+
     [{
       "action": {
         "type": "text",
