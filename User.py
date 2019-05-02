@@ -1,3 +1,5 @@
+from vk_methods import VkMethods
+
 class User:
 
 	def __init__(self, user_id, lobby_id):
@@ -22,8 +24,12 @@ class User:
 	def getPosition(self, num_move):
 		self.position = self.position + num_move
 		if (self.position > 39):
+			self.money = self.money + 200
 			self.position = self.position - 40
-		return self.position
+
+			return self.position, True
+		else:
+			return self.position, False
 
 	def getRent(self):
 		self.NEXT_INPUT1 = 'rent_command'

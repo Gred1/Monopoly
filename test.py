@@ -1,34 +1,13 @@
-class SchoolMember:
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
-        self.num = 2315
-        print('(Создан SchoolMember: {0})'.format(self.name))
-    def tell(self):
-        print('Имя:"{0}" Возраст:"{1}"'.format(self.name, self.age), end=" ")
+maps = [
+    ["РЕН ТВ", 0, 2, 0, {"price_to_buy" : 100, "price_to_build_branch" : 50, "price_branch" : [8, 40, 100, 300, 600]}],
+    ["МАГНИТ", 0, 1, 0, {"price_to_buy" : 50, "price_to_build_branch" : 50, "price_branch" : [1, 10, 30, 90, 200]}],
+    ["ПЯТЕРОЧКА", 0, 1, 0, {"price_to_buy" : 60, "price_to_build_branch" : 50, "price_branch" : [4, 15, 60, 180, 450]}],
+    ["АШАН", 0, 1, 0, {"price_to_buy" : 70, "price_to_build_branch" : 50, "price_branch" : [6, 20, 80, 200, 600]}],
+    ["BBC" , 0, 2, 0, {"price_to_buy" : 110, "price_to_build_branch" : 50, "price_branch" : [12, 50, 150, 350, 650]}],    
+    ["ПЕРВЫЙ КАНАЛ", 0, 2, 0, {"price_to_buy" : 90, "price_to_build_branch" : 50, "price_branch" : [7, 30, 90, 250, 550]}],
+]
 
-class Teacher(SchoolMember):
-    def __init__(self, name, age, salary):
-        SchoolMember.__init__(self, name, age)
-        self.salary = salary
-        print('(Создан Teacher: {0})'.format(self.name))
-    def tell(self):
-        SchoolMember.tell(self)
-        print('Зарплата: "{0:d}"'.format(self.salary))
-
-class Student(SchoolMember):
-    def __init__(self, name, age, marks):
-        SchoolMember.__init__(self, name, age)
-        self.marks = marks
-        print(self.num)
-        print('(Создан Student: {0})'.format(self.name))
-    def tell(self):
-        SchoolMember.tell(self)
-        print('Оценки: "{0:d}"'.format(self.marks))
-
-t = Teacher('Mrs. Shrividya', 40, 30000)
-s = Student('Swaroop', 25, 75)
-print() # печатает пустую строку
-members = [t, s]
-for member in members:
-    member.tell()
+for i in range(1, 9):
+    for j in range(len(maps)):
+        if(i == maps[j][2]):
+            print(maps[j][0])

@@ -25,10 +25,7 @@ def everyTime(connect, monopoly):
         if lobby_from_class_connect[i][1] == 1:
             time_lobby = monopoly[i].timer
 
-            time_lobby = math.floor(time_lobby+30)
-            print(time_lobby)
-            print(math.floor(time.time()))
-            print()
+            time_lobby = math.floor(time_lobby+60)
             if time_lobby < math.floor(time.time()):
                 monopoly[i].exitTime()
                 print('игрок вылетел')
