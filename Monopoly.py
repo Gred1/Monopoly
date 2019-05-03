@@ -21,6 +21,8 @@ class Monopoly:
                         ["ЗАПЛАТИТЬ АРЕНДУ"], # 3
                         ["ФИЛИАЛ "], # 4
                         ["ФИЛИАЛ"], # 5
+                        ["ПРОДАТЬ "], # 6
+                        ["ПРОДАТЬ"] # 7
                     ]
         self.i = 0 # номер игрока, который должен ходить(от 0)
         self.count_players = len(self.id_users) # количество игроков в лобби
@@ -113,8 +115,13 @@ class Monopoly:
             return self.toBuildBranch(command)
 
         elif self.COMMANDS[5][0] == command:
-
             return "Введите: филиал 'название предприятия'"
+
+        elif self.COMMANDS[6][0] in command:
+            return self.toSellBranch(command)
+
+        elif self.COMMANDS[7][0] == command:
+            return "Введите: продать 'название предприятия'"
 
         else:
             self.button = "game.json"
@@ -123,6 +130,39 @@ class Monopoly:
 
 
     ''' СНОВНЫЕ ФУНКЦИИ ИГРЫ '''
+    def toSellBranch(self, command):
+        command = command.split()
+        if (len(command) < 2):
+            return "Некорректно введен филиал"
+        command1 = command[0] + command[1]
+        command2 = ''
+
+        if len(command) > 2:
+            for i in range(1 , len(command)):
+                command2 = command2 + ' ' +command[i]
+            command2 = command2[1:]
+        else:
+            command2 = command[1]
+
+        print(command2)
+        for i in range(40):
+            if command2 == self.map[i][0]:
+                if self.isToBuildBranch(self.map[i]) and self.map[i][3] != 0:
+
+                    self.map[i][3] = self.map[i][3] - 1
+                    text = self.vk_methods.getNameById(self.move_players) + " продает филиал. Теперь аренда " + self.map[i][0] + " снижена до " + str(self.map[i][4]["price_branch"][self.map[i][3]])
+                    text2 = ''
+                    if (self.map[i][3] == 0):
+                        text2 = '\n' + 'Вы продали все филиалы на этом бизнесе'
+
+                    self.user[self.move_players].money = self.user[self.move_players].money + self.map[i][4]["price_to_build_branch"]
+                    self.vk_methods.sendMessageAllNoUser(self.id_users, text + text2, self.move_players, "game_without.json")
+                    return "Филиал продан. Теперь аренда " + self.map[i][0] + " снижена до " + str(self.map[i][4]["price_branch"][self.map[i][3]]) + ".\nВыручка составила " + str(self.map[i][4]["price_to_build_branch"]) + text2
+                else:
+                    return "Здесь нету филиалов"
+        return "нет2"
+
+
     def toBuildBranch(self, command):
         command = command.split()
         if (len(command) < 2):
@@ -137,17 +177,26 @@ class Monopoly:
         else:
             command2 = command[1]
 
-        for i in range(40):
-            if command2 == self.map[i][0]:
-                if self.isToBuildBranch(self.map[i]):
+        if self.user[self.move_players].isToSellOrBuildBranch == 1:
+            for i in range(40):
+                if command2 == self.map[i][0]:
+                    if self.isToBuildBranch(self.map[i]) and self.map[i][3] != 4:
 
-                    self.map[i][3] = self.map[i][3] + 1
-                    self.user[self.move_players].money = self.user[self.move_players].money - self.map[i][4]["price_to_build_branch"]
-                    self.vk_methods.sendMessageAllNoUser(self.id_users, self.vk_methods.getNameById(self.move_players) + " строит филиал. Теперь аренда " + self.map[i][0] + " увеличина до " + str(self.map[i][4]["price_branch"][self.map[i][3]]), self.move_players, "game_without.json")
-                    return "Филиал построен. Теперь аренда " + self.map[i][0] + " увеличина до " + str(self.map[i][4]["price_branch"][self.map[i][3]]) + ".\nСтоимость постройки " + str(self.map[i][4]["price_to_build_branch"])
-                else:
-                    return "Нельзя построить здесь филиал"
-        return "нет2"
+                        self.map[i][3] = self.map[i][3] + 1
+                        text = self.vk_methods.getNameById(self.move_players) + " строит филиал. Теперь аренда " + self.map[i][0] + " увеличина до " + str(self.map[i][4]["price_branch"][self.map[i][3]])
+                        text2 = ''
+                        if (self.map[i][3] == 4):
+                            text2 = '\n' + 'У вас максимальный уровень филиалы на этом бизнесе'
+
+                        self.user[self.move_players].isToSellOrBuildBranch = 0
+                        self.user[self.move_players].money = self.user[self.move_players].money - self.map[i][4]["price_to_build_branch"]
+                        self.vk_methods.sendMessageAllNoUser(self.id_users, text + text2, self.move_players, "game_without.json")
+                        return "Филиал построен. Теперь аренда " + self.map[i][0] + " увеличина до " + str(self.map[i][4]["price_branch"][self.map[i][3]]) + ".\nСтоимость постройки " + str(self.map[i][4]["price_to_build_branch"]) + text2
+                    else:
+                        return "Нельзя построить здесь филиал"
+            return "нет2"
+        else:
+            return "Вы уже построили один филиал"
 
     def scriptDevelopmentDice(self):
         text = 'Ход: ' + self.vk_methods.getNameById(self.move_players) # Сообщение
@@ -279,7 +328,7 @@ class Monopoly:
             self.button = "game_without.json"
         return text_main
 
-    def isToBuildBranch(self, array_property):
+    def isToBuildBranch(self, array_property): # проверяет, есть ли у бизнеса филиал
         k = 0
         for i in range(40):
             if self.map[i][1] == self.move_players and self.map[i][2] == array_property[2]:
@@ -293,7 +342,7 @@ class Monopoly:
     def rollDice(self): # бросаем кости
         one = random.randint(1, 6)
         two = random.randint(1, 6)
-        summa_dice = one + two
+        summa_dice = 1
         text = "Выпало " + str(one) + ":" + str(two)
         return text, summa_dice
 
@@ -318,6 +367,7 @@ class Monopoly:
             self.i = 0
         else:
             self.i = self.i + 1
+        self.user[self.move_players].isToSellOrBuildBranch = 1    
         self.move_players = self.id_users[self.i] # даем ход следующему игроку
         self.timer = time.time()
 

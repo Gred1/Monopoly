@@ -10,6 +10,7 @@ class User:
 		self.NEXT_INPUT1 = "get_command"
 		self.button = "game_without.json"
 		self.property = []
+		self.isToSellOrBuildBranch = 1
 
 	def defaultValue(self):
 		self.NEXT_INPUT1 = "get_command"
