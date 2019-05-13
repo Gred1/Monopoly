@@ -8,12 +8,12 @@ class Monopoly:
     """docstring for Monopoly"""
     def __init__(self, id_lobby, id_users, move_players, vk, timer):
 
-        self.now_player = ''
+        self.now_player             = ''
 
-        self.move_players = move_players # определяет, какого игрока ход
-        self.id_users = id_users
-        self.id_lobby = id_lobby # ID лобби в котором находится игрок
-        self.NEXT_INPUT = "get_command" # Следующая команда для пользователя
+        self.move_players           = move_players # определяет, какого игрока ход
+        self.id_users               = id_users
+        self.id_lobby               = id_lobby # ID лобби в котором находится игрок
+        self.NEXT_INPUT             = "get_command" # Следующая команда для пользователя
         self.COMMANDS = [
                         ["БРОСИТЬ КУБИКИ"], # 0
                         ["КУПИТЬ ПРЕДПРИЯТИЕ"], # 1
@@ -22,19 +22,21 @@ class Monopoly:
                         ["ФИЛИАЛ "], # 4
                         ["ФИЛИАЛ"], # 5
                         ["ПРОДАТЬ "], # 6
-                        ["ПРОДАТЬ"] # 7
+                        ["ПРОДАТЬ"], # 7
+                        ["ЗАЛОГ "], # 9
+                        ["ЗАЛОГ"], # 8
                     ]
-        self.i = 0 # номер игрока, который должен ходить(от 0)
-        self.count_players = len(self.id_users) # количество игроков в лобби
-        self.button = ''
+        self.i                      = 0 # номер игрока, который должен ходить(от 0)
+        self.count_players          = len(self.id_users) # количество игроков в лобби
+        self.button                 = ''
         self.NEXT_INPUT_AND_BUTTON = {
                 "get_command" : "game.json",
                 "isBuy_command" : "isBuy.json",
                 "rent_command" : "rent.json"
         }
 
-        self.timer = timer # время, в котороые начал хдить пользователь
-        self.line = '______________'
+        self.timer                  = timer # время, в котороые начал хдить пользователь
+        self.line                   = '______________'
         # карты игры
         # типы корпораций: 1 - ы
         # ключ : [Название, Владелец, Тип корпорации, уровень филиала, цена["price_to_buy" : цена, "price_to_build_branch" : цена, "price_branch" : [цена, цена, цена, цена, цена]]]
@@ -123,14 +125,21 @@ class Monopoly:
         elif self.COMMANDS[7][0] == command:
             return "Введите: продать 'название предприятия'"
 
+        elif self.COMMANDS[8][0] in command:
+            return self.toDepositBusiness(command)
+
+        elif self.COMMANDS[9][0] == command:
+            return "Введите: залог 'название предприятия'"
+
         else:
             self.button = "game.json"
             self.user[self.now_player].button = "game.json"
             return "Не понял"
 
 
-    ''' СНОВНЫЕ ФУНКЦИИ ИГРЫ '''
-    def toSellBranch(self, command):
+    ''' ОСНОВНЫЕ ФУНКЦИИ ИГРЫ ''' 
+
+    def toSellBranch(self, command): # продаем филиал
         command = command.split()
         if (len(command) < 2):
             return "Некорректно введен филиал"
@@ -163,7 +172,7 @@ class Monopoly:
         return "нет2"
 
 
-    def toBuildBranch(self, command):
+    def toBuildBranch(self, command): # строим филиал
         command = command.split()
         if (len(command) < 2):
             return "Некорректно введен филиал"
@@ -180,6 +189,12 @@ class Monopoly:
         if self.user[self.move_players].isToSellOrBuildBranch == 1:
             for i in range(40):
                 if command2 == self.map[i][0]:
+                    if (self.isDepositOnBranch(self.map[i][2])):
+                        return "На участке есть заложенная недвижимость"
+
+                    if self.map[i][3] == "deposit":
+                        return "Недвижимость заложена"
+
                     if self.isToBuildBranch(self.map[i]) and self.map[i][3] != 4:
 
                         self.map[i][3] = self.map[i][3] + 1
@@ -197,6 +212,62 @@ class Monopoly:
             return "нет2"
         else:
             return "Вы уже построили один филиал"
+
+    def toDepositBusiness(self, command):
+        command = command.split()
+        if (len(command) < 2):
+            return "Некорректно введен филиал"
+        command1 = command[0]
+        command2 = ''
+
+        if len(command) > 2:
+            for i in range(1 , len(command)):
+                command2 = command2 + ' ' +command[i]
+            command2 = command2[1:]
+        else:
+            command2 = command[1]
+
+        for i in range(40):
+            if command2 == self.map[i][0]:
+                if self.map[i][3] == "deposit":
+                    return "Недвижимость уже заложена"
+
+                if (self.map[i][1] != self.move_players):
+                    return "Это не ваш бизнесс"
+
+                if self.map[i][3] == 0 and self.isHaveBranchPlayer() == True:
+
+                    self.map[i][3] = "deposit"
+                    text = self.vk_methods.getNameById(self.move_players) + " закладывает " + self.map[i][0]
+                    text2 = ''
+
+                    self.user[self.move_players].money = self.user[self.move_players].money + self.map[i][4]["price_to_buy"] // 2
+                    self.vk_methods.sendMessageAllNoUser(self.id_users, text + text2, self.move_players, "game_without.json")
+                    return "Недвижимость заложена. \nБанк вернул " + str(self.map[i][4]["price_to_buy"] // 2)
+                else:
+                    return "Есть не проданные филиалы на " + self.chain_of_stores[self.map[i][2]]
+        return "нет2"
+
+    def isHaveBranchPlayer(self):
+        k = 0
+        for i in range(len(self.user[self.move_players].property)):
+            if self.user[self.move_players].property[i][3] != 0:
+                k = k + 1
+
+        if k == 0:
+            return True
+        else:
+            return False
+
+    def isDepositOnBranch(self, branch):
+        k = 0
+        for i in range(len(self.map)):
+            if self.map[i][2] == branch and self.map[i][3] == "deposit":
+                k = k + 1
+        if k == 0:
+            return False
+        else:
+            return True
 
     def scriptDevelopmentDice(self):
         text = 'Ход: ' + self.vk_methods.getNameById(self.move_players) # Сообщение
@@ -261,7 +332,14 @@ class Monopoly:
             self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
             return "Белый бизнесс"
 
-        if(self.map[self.position][1] == self.move_players):
+        if (self.map[self.position][3] == "deposit"):
+            self.vk_methods.sendMessageAllNoUser(self.id_users, self.vk_methods.getNameById(self.move_players) +" попал на заложенную недвижимость", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
+            self.vk_methods.write_msg(self.move_players, "Вы попали на заложенную недвижимость")
+            self.nextMove()
+            self.NEXT_INPUT, self.button = self.user[self.now_player].defaultValue()
+            return False
+
+        elif(self.map[self.position][1] == self.move_players):
             self.vk_methods.sendMessageAllNoUser(self.id_users, self.vk_methods.getNameById(self.move_players) +" попал на свою территорию", self.move_players, "game_without.json") # - Сообщение для всех, кроме ходящего
             self.vk_methods.write_msg(self.move_players, "Вы попали на свою территорию")
             self.nextMove()
@@ -293,9 +371,13 @@ class Monopoly:
 
         for i in range(1, 9):
             for j in range(len(property_player)):
-                if(i == property_player[j][2]):
+                if(i == property_player[j][2]): # для сортировки
                     level_branch = property_player[j][3]
-                    property_text = property_text + property_player[j][0] + ' (цена за аренду '+ str(property_player[j][4]['price_branch'][level_branch]) + ') - '+ self.chain_of_stores[property_player[j][2]] +'\n'
+
+                    if level_branch == 'deposit':
+                        property_text = property_text + property_player[j][0] +  ' - недвижимость заложена' +'\n'
+                    else:
+                        property_text = property_text + property_player[j][0] + ' (цена за аренду '+ str(property_player[j][4]['price_branch'][level_branch]) + ') - '+ self.chain_of_stores[property_player[j][2]] +'\n'
 
         property_text = 'Имущество: \n' + property_text
         money_text = 'Деньги: ' + str(money_player)
@@ -314,9 +396,14 @@ class Monopoly:
             property_player = self.user[self.id_users[j]].property
             money_player = self.user[self.id_users[j]].money
             property_text = ''
+
             for i in range(len(property_player)):
                 level_branch = property_player[i][3]
-                property_text = property_text + property_player[i][0] + ' (цена за аренду '+ str(property_player[i][4]['price_branch'][level_branch]) + ')\n'
+                if level_branch == 'deposit':
+                    property_text = property_text + property_player[j][0] +  ' - недвижимость заложена' +'\n'
+                else:
+                    property_text = property_text + property_player[j][0] + ' (цена за аренду '+ str(property_player[j][4]['price_branch'][level_branch]) + ') - '+ self.chain_of_stores[property_player[j][2]] +'\n'
+
             property_text = 'Имущество: \n' + property_text
             money_text = 'Деньги: ' + str(money_player) + '\n'
             text =self.vk_methods.getNameById(self.id_users[j]).upper() + '\n' + '\n' + property_text + '\n' + money_text + self.line
@@ -326,8 +413,8 @@ class Monopoly:
             self.button = self.NEXT_INPUT_AND_BUTTON[self.NEXT_INPUT]
         else:
             self.button = "game_without.json"
-        return text_main
-
+        return text_main          
+            
     def isToBuildBranch(self, array_property): # проверяет, есть ли у бизнеса филиал
         k = 0
         for i in range(40):
@@ -342,7 +429,7 @@ class Monopoly:
     def rollDice(self): # бросаем кости
         one = random.randint(1, 6)
         two = random.randint(1, 6)
-        summa_dice = 1
+        summa_dice = one + two
         text = "Выпало " + str(one) + ":" + str(two)
         return text, summa_dice
 
